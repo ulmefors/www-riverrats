@@ -16,7 +16,7 @@ $ make build
 ## Deploy
 
 ```shell
-$ export DOMAIN=<your_domain>
+$ export DOMAIN=<your_www_domain>
 $ make deploy
 ```
 
