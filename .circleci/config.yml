@@ -1,0 +1,59 @@
+version: 2.1
+
+workflows:
+  build:
+    jobs:
+      - build
+
+  deploy:
+    jobs:
+      - build_deploy:
+          filters:
+            branches:
+              only:
+                - master
+
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.8.7
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13   
+      - run:
+          name: Build
+          command: |
+            wget https://github.com/gohugoio/hugo/releases/download/v0.80.0/hugo_0.80.0_Linux-64bit.deb
+            sudo dpkg -i hugo_0.80.0_Linux-64bit.deb
+            git submodule update --init
+            hugo -v
+
+  build_deploy:
+    docker:
+      - image: cimg/python:3.8.7
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13   
+      - run:
+          name: Build
+          command: |
+            wget https://github.com/gohugoio/hugo/releases/download/v0.80.0/hugo_0.80.0_Linux-64bit.deb
+            sudo dpkg -i hugo_0.80.0_Linux-64bit.deb
+            git submodule update --init
+            hugo -v
+      - run:
+          name: Deploy
+          command: |
+            sudo apt update && sudo apt install jq -y
+            wget https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.1.21.zip
+            unzip awscli-exe-linux-x86_64-2.1.21.zip
+            sudo ./aws/install
+            aws s3 rm s3://${DOMAIN}/ --recursive
+            aws s3 cp public s3://${DOMAIN}/ --recursive
+            DISTRIBUTION_ID=`aws cloudfront list-distributions |jq -c '.DistributionList.Items[] | select(.Origins.Items[0].Id==env.DOMAIN) | .Id' |sed 's/\"//g'`
+            aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+          environment:
+            AWS_PAGER: ""
+
