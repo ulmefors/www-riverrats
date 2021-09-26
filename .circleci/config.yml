@@ -3,7 +3,10 @@ version: 2.1
 workflows:
   build:
     jobs:
-      - build
+      - build:
+          branches:
+            ignore:
+              - main
 
   deploy:
     jobs:
