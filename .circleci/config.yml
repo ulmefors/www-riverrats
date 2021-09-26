@@ -4,9 +4,10 @@ workflows:
   build:
     jobs:
       - build:
-          branches:
-            ignore:
-              - main
+          filters:
+            branches:
+              ignore:
+                - main
 
   deploy:
     jobs:
